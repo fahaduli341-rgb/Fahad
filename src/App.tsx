@@ -8,6 +8,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AdminProvider } from './context/AdminContext';
 import { IntroScreen } from './components/IntroScreen';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -17,6 +18,7 @@ import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { OwnerModal } from './components/OwnerModal';
 import { DeployGuideModal } from './components/DeployGuideModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
 
 function PortfolioMain() {
   const [showIntro, setShowIntro] = useState(true);
@@ -71,6 +73,8 @@ function PortfolioMain() {
         isOpen={isDeployGuideOpen}
         onClose={() => setIsDeployGuideOpen(false)}
       />
+
+      <AdminLoginModal />
     </div>
   );
 }
@@ -79,7 +83,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <PortfolioMain />
+        <AdminProvider>
+          <PortfolioMain />
+        </AdminProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

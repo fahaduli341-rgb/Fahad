@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAdmin } from '../context/AdminContext';
 
 interface NavbarProps {
   onOpenOwnerModal: () => void;
@@ -28,7 +29,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { isAdmin, openLoginModal } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleInboxClick = () => {
+    if (isAdmin) {
+      onOpenOwnerModal();
+    } else {
+      openLoginModal();
+    }
+  };
 
   const navLinks = [
     { name: lang === 'en' ? 'About Fahad' : 'আমার সম্পর্কে', href: '#about' },
@@ -107,14 +117,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden xl:inline">01704621603</span>
             </a>
 
-            {/* Owner Inbox Button */}
+            {/* Owner Inbox Button (Protected) */}
             <button
               id="inbox-button"
-              onClick={onOpenOwnerModal}
-              className="relative p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-cyan-400 border border-slate-700 hover:border-slate-600 transition-colors"
-              title="Developer Message Inbox (Firebase)"
+              onClick={handleInboxClick}
+              className={`relative p-2 rounded-lg text-slate-300 hover:text-cyan-400 border transition-colors ${
+                isAdmin ? 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300' : 'bg-slate-800 border-slate-700 hover:border-slate-600'
+              }`}
+              title={isAdmin ? "Fahad's Inbox (Unlocked)" : "Developer Inbox (Passcode Protected)"}
             >
               <Inbox className="w-4 h-4" />
+              {isAdmin && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400"></span>
+              )}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce">
                   {unreadCount}
@@ -137,10 +152,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2 md:hidden">
             <button
               id="mobile-inbox-btn"
-              onClick={onOpenOwnerModal}
-              className="relative p-2 rounded-lg bg-slate-800 text-slate-300 border border-slate-700"
+              onClick={handleInboxClick}
+              className={`relative p-2 rounded-lg border ${
+                isAdmin ? 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+              }`}
+              title={isAdmin ? "Owner Inbox (Unlocked)" : "Developer Inbox"}
             >
               <Inbox className="w-4 h-4" />
+              {isAdmin && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400"></span>
+              )}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadCount}

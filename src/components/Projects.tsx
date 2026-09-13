@@ -10,7 +10,9 @@ import {
   X,
   Layers,
   Link2,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  LogOut
 } from 'lucide-react';
 import { 
   collection, 
@@ -26,9 +28,11 @@ import confetti from 'canvas-confetti';
 import { db } from '../firebase';
 import { Project } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { useAdmin } from '../context/AdminContext';
 
 export const Projects: React.FC = () => {
   const { lang } = useLanguage();
+  const { isAdmin, openLoginModal, logout } = useAdmin();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -132,10 +136,21 @@ export const Projects: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <div className="space-y-3 max-w-2xl text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold tracking-wide uppercase">
-              <Globe className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? 'Live Showcase' : 'লাইভ প্রজেক্টসমূহ'}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold tracking-wide uppercase">
+                <Globe className="w-3.5 h-3.5" />
+                <span>{lang === 'en' ? 'Live Showcase' : 'লাইভ প্রজেক্টসমূহ'}</span>
+              </div>
+
+              {/* Only shown if Fahad has unlocked owner mode */}
+              {isAdmin && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Fahad (Owner)</span>
+                </span>
+              )}
             </div>
+
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-display">
               {lang === 'en' ? 'My Live Projects' : 'আমার লাইভ প্রজেক্টসমূহ'}
             </h2>
@@ -146,15 +161,35 @@ export const Projects: React.FC = () => {
             </p>
           </div>
 
-          {/* Add Live Demo Link Button */}
-          <button
-            id="add-live-project-btn"
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/25 shrink-0 self-start sm:self-auto cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-slate-950 stroke-[3]" />
-            <span>{lang === 'en' ? '+ Add Live Project' : '+ নতুন ডেমো লিংক যুক্ত করুন'}</span>
-          </button>
+          {/* Admin action controls: ONLY shown to Fahad */}
+          {isAdmin ? (
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <button
+                id="add-live-project-btn"
+                onClick={() => setIsAddModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/25 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-slate-950 stroke-[3]" />
+                <span>{lang === 'en' ? '+ Add Live Project' : '+ নতুন ডেমো লিংক যুক্ত করুন'}</span>
+              </button>
+              <button
+                onClick={logout}
+                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors cursor-pointer"
+                title="Lock / Logout Owner Mode"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={openLoginModal}
+              className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1 self-start sm:self-auto p-1.5 opacity-30 hover:opacity-100"
+              title="Fahad Owner Login"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Owner Access</span>
+            </button>
+          )}
         </div>
 
         {/* Projects Grid or Zero-State */}
@@ -165,21 +200,23 @@ export const Projects: React.FC = () => {
             </div>
             <div className="space-y-1.5">
               <h3 className="text-lg font-bold text-white font-display">
-                {lang === 'en' ? 'No Live Projects Added Yet' : 'এখনো কোনো ডেমো লিংক যুক্ত করা হয়নি'}
+                {lang === 'en' ? 'No Live Projects Yet' : 'এখনো কোনো ডেমো লিংক নেই'}
               </h3>
               <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-                {lang === 'en'
-                  ? 'Click the button below to paste your Vercel live website demo link and publish it instantly for your visitors!'
-                  : 'নিচের বাটনে ক্লিক করে আপনার ভার্সেল লাইভ ওয়েবসাইট ডেমো লিংকটি যোগ করুন। সাথে সাথে ভিজিটররা দেখতে পাবে!'}
+                {isAdmin 
+                  ? (lang === 'en' ? 'Click below to paste your Vercel live website demo link!' : 'নিচের বাটনে ক্লিক করে ভার্সেল লাইভ ওয়েবসাইট ডেমো লিংকটি যোগ করুন!')
+                  : (lang === 'en' ? 'New live websites will be showcased here.' : 'নতুন লাইভ ওয়েবসাইটসমূহ এখানে প্রদর্শিত হবে।')}
               </p>
             </div>
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>{lang === 'en' ? 'Add First Live Demo' : 'প্রথম ডেমো লিংক যুক্ত করুন'}</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>{lang === 'en' ? 'Add First Live Demo' : 'প্রথম ডেমো লিংক যুক্ত করুন'}</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -234,36 +271,38 @@ export const Projects: React.FC = () => {
                     href={proj.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 py-2 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-cyan-500/20"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-cyan-500/20"
                   >
                     <span>{lang === 'en' ? 'Open Live Demo' : 'লাইভ সাইট দেখুন'}</span>
                     <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
                   </a>
 
-                  {/* Delete button (with confirmation) */}
-                  {deleteConfirmId === proj.id ? (
-                    <div className="flex items-center gap-1">
+                  {/* Delete button (ONLY shown to Fahad in admin mode) */}
+                  {isAdmin && (
+                    deleteConfirmId === proj.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDeleteProject(proj.id)}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(null)}
+                          className="px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => handleDeleteProject(proj.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors"
+                        onClick={() => setDeleteConfirmId(proj.id)}
+                        className="p-2.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-slate-900 border border-slate-800 hover:border-rose-500/30 transition-all"
+                        title="Delete Project (Owner only)"
                       >
-                        Confirm
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => setDeleteConfirmId(null)}
-                        className="px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirmId(proj.id)}
-                      className="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-slate-900 border border-transparent hover:border-rose-500/30 transition-all"
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    )
                   )}
                 </div>
               </div>

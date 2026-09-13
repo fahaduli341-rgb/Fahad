@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Projects collection: readable by all, writable by all for demo/owner
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Messages collection: anyone can submit a message for Al-Fahad
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string 
+                    && request.resource.data.email is string
+                    && request.resource.data.message is string;
+      allow update, delete: if true;
+    }
+
+    // Recommendations / Testimonials collection: readable by all, writable by all
+    match /recommendations/{recId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.message is string;
+      allow update, delete: if true;
+    }
+
+    // Likes & interaction stats
+    match /stats/{statId} {
+      allow read, write: if true;
+    }
+  }
+}

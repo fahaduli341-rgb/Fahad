@@ -1,0 +1,6 @@
+{
+  "name": "Al-Fahad - Web Developer Portfolio",
+  "description": "Personal developer portfolio for Al-Fahad (develop with fahad) featuring AI-assisted web development, Vercel live demo showcase, and Firebase Firestore cloud connectivity.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
